@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UHPC Raw Material Prices</title>
+    <style>
+        /* 原有CSS样式保持不变 */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .sidebar {
+            width: 30%;
+            background-color: #fff;
+            padding: 20px;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        /* ...其他样式保持不变... */
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div id="loading" style="display: none; color: #666; padding: 10px;">加载价格数据中...</div>
+        <h2>Select a Continent</h2>
+        <ul id="continents-list"></ul>
+        <div id="countries-list"></div>
+    </div>
+    
+    <div class="content" id="material-prices">
+        <h1>Welcome to UHPC Material Finder</h1>
+        <!-- 原有介绍内容保持不变 -->
+    </div>
+
+    <script>
+        let globalData = {}; // 存储全局数据
+
+        // 数据加载函数
+        async function fetchData() {
+            const loadingElement = document.getElementById('loading');
+            try {
+                loadingElement.style.display = 'block';
+                const response = await fetch('https://github.com/xx0810/price.git'); // 替换为你的JSON地址
+                if (!response.ok) throw new Error('Network response was not ok');
+                globalData = await response.json();
+                populateContinents();
+            } catch (error) {
+                console.error('数据加载失败:', error);
+                alert('价格数据加载失败，请检查网络连接后刷新页面');
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
+
+        // 大洲列表生成
+        function populateContinents() {
+            const continentsList = document.getElementById('continents-list');
+            continentsList.innerHTML = ''; // 清空旧数据
+            Object.keys(globalData).forEach(continent => {
+                const li = document.createElement('li');
+                li.textContent = continent;
+                li.onclick = () => handleContinentClick(continent);
+                continentsList.appendChild(li);
+            });
+        }
+
+        // 处理大洲点击
+        function handleContinentClick(continent) {
+            const countriesList = document.getElementById('countries-list');
+            countriesList.innerHTML = `<h2>Select a Country</h2><ul id="country-items"></ul>`;
+            
+            const countryItems = document.getElementById('country-items');
+            Object.keys(globalData[continent]).forEach(country => {
+                const li = document.createElement('li');
+                li.textContent = country;
+                li.onclick = () => handleCountryClick(continent, country);
+                countryItems.appendChild(li);
+            });
+        }
+
+        // 处理国家点击
+        function handleCountryClick(continent, country) {
+            const materialPrices = document.getElementById('material-prices');
+            materialPrices.innerHTML = `
+                <button onclick="showIntroduction()">Return to Introduction</button>
+                <h1>${country}</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(globalData[continent][country]).map(([material, price]) => `
+                            <tr>
+                                <td>${material}</td>
+                                <td>${price}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // 显示介绍页面
+        function showIntroduction() {
+            const materialPrices = document.getElementById('material-prices');
+            materialPrices.innerHTML = `
+                <h1>Welcome to UHPC Material Finder</h1>
+                <!-- 原有介绍内容保持不变 -->
+            `;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData(); // 首次加载
+            setInterval(fetchData, 300000); // 每5分钟更新数据
+        });
+    </script>
+</body>
+</html>
